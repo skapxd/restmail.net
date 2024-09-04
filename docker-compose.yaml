@@ -1,0 +1,45 @@
+version: '3.8'
+
+services:
+  webserver:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      NODE_ENV: production
+    depends_on:
+      - emailserver
+    volumes:
+      - .:/app
+    command: node bin/webserver.js
+
+  emailserver:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    ports:
+      - "25:25"
+    environment:
+      NODE_ENV: production
+    volumes:
+      - .:/app
+    command: node bin/emailserver.js
+
+  redis:
+    image: redis:7.0.5
+    ports:
+      - "6379:6379"
+
+  nginx:
+    image: nginx:latest
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./ansible/playbooks/roles/nginx:/etc/nginx/conf.d
+    depends_on:
+      - webserver
+      - emailserver
